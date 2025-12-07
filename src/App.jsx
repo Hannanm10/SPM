@@ -17,7 +17,7 @@ function App() {
 
       <main className="main-content">
         {activeTab === 'chat' && <ChatInterface />}
-        {activeTab === 'analysis' && <DocAnalysis />}
+        {/* {activeTab === 'analysis' && <DocAnalysis />} */}
       </main>
     </div>
   );

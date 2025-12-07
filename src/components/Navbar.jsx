@@ -11,7 +11,7 @@ const Navbar = ({ activeTab, onTabChange }) => {
                         <Scale className="icon-md text-white" />
                     </div>
                     <span className="logo-text">
-                        IP Law<span className="text-accent">Agent</span>
+                        Karwe <span className="text-accent">Law</span>
                     </span>
                 </div>
 
@@ -23,13 +23,13 @@ const Navbar = ({ activeTab, onTabChange }) => {
                         <Bot className="icon-sm" />
                         Legal Assistant
                     </button>
-                    <button
+                    {/* <button
                         onClick={() => onTabChange('analysis')}
                         className={`nav-link ${activeTab === 'analysis' ? 'active' : ''}`}
                     >
                         <FileText className="icon-sm" />
                         Doc Analysis
-                    </button>
+                    </button> */}
                 </div>
 
                 <div className="nav-actions">
