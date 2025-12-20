@@ -1,46 +1,103 @@
 import React, { useState } from 'react';
-import { Upload, FileText, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, FileText, AlertTriangle, CheckCircle, XCircle, Shield, FileCheck } from 'lucide-react';
 
-const RiskReport = () => {
+const RiskReport = ({ analysisData }) => {
+    const { filename, analysis } = analysisData;
+    
+    const getRiskColor = (level) => {
+        switch(level?.toLowerCase()) {
+            case 'low': return 'text-success';
+            case 'medium': return 'text-warning';
+            case 'high': return 'icon-danger';
+            case 'critical': return 'icon-danger';
+            default: return 'text-warning';
+        }
+    };
+
+    const getRiskBadgeClass = (level) => {
+        switch(level?.toLowerCase()) {
+            case 'low': return 'risk-badge-low';
+            case 'medium': return 'risk-badge-medium';
+            case 'high': return 'risk-badge-high';
+            case 'critical': return 'risk-badge-critical';
+            default: return 'risk-badge';
+        }
+    };
+
     return (
         <div className="risk-report-container animate-slide-up">
             <div className="glass-panel risk-card">
                 <div className="risk-header">
                     <div className="risk-title-group">
                         <h3 className="risk-title">
-                            <AlertTriangle className="icon-md text-warning" />
-                            Potential Copyright Risk Detected
+                            <Shield className={`icon-md ${getRiskColor(analysis.overall_risk_level)}`} />
+                            Intellectual Property Analysis
                         </h3>
-                        <p className="risk-subtitle">Analysis for: project_proposal_v2.pdf</p>
+                        <p className="risk-subtitle">Analysis for: {filename}</p>
                     </div>
-                    <span className="risk-badge">
-                        Moderate Risk
+                    <span className={getRiskBadgeClass(analysis.overall_risk_level)}>
+                        {analysis.overall_risk_level || 'Unknown'} Risk
                     </span>
                 </div>
 
-                <div className="risk-details">
-                    <div className="risk-item">
-                        <CheckCircle className="icon-sm text-original icon-success" />
-                        <span className="risk-text">Originality check passed (85% unique)</span>
-                    </div>
-                    <div className="risk-item">
-                        <XCircle className="icon-sm icon-danger" />
-                        <span className="risk-text">Matches found in 3rd party databases (Images)</span>
-                    </div>
-                    <div className="risk-item">
-                        <AlertTriangle className="icon-sm icon-warning" />
-                        <span className="risk-text">License compatibility warning: MIT vs GPL v3</span>
-                    </div>
+                <div className="risk-section">
+                    <h4 className="risk-section-title">IP Classification</h4>
+                    <p className="risk-text">{analysis.ip_classification}</p>
                 </div>
 
-                <div className="risk-actions">
-                    <button className="btn-link">
-                        View Detailed Report
-                    </button>
-                    <button className="btn-link-secondary">
-                        Download PDF
-                    </button>
+                <div className="risk-section">
+                    <h4 className="risk-section-title">Patentability Assessment</h4>
+                    <p className="risk-text">{analysis.patentability_assessment}</p>
                 </div>
+
+                {analysis.novelty_indicators && analysis.novelty_indicators.length > 0 && (
+                    <div className="risk-section">
+                        <h4 className="risk-section-title">Novelty Indicators</h4>
+                        <div className="risk-details">
+                            {analysis.novelty_indicators.map((indicator, idx) => (
+                                <div key={idx} className="risk-item">
+                                    <CheckCircle className="icon-sm text-success" />
+                                    <span className="risk-text">{indicator}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {analysis.infringement_risks && analysis.infringement_risks.length > 0 && (
+                    <div className="risk-section">
+                        <h4 className="risk-section-title">Infringement Risks</h4>
+                        <div className="risk-details">
+                            {analysis.infringement_risks.map((risk, idx) => (
+                                <div key={idx} className="risk-item">
+                                    <AlertTriangle className="icon-sm icon-warning" />
+                                    <span className="risk-text">{risk}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {analysis.protection_recommendations && analysis.protection_recommendations.length > 0 && (
+                    <div className="risk-section">
+                        <h4 className="risk-section-title">Protection Recommendations</h4>
+                        <div className="risk-details">
+                            {analysis.protection_recommendations.map((rec, idx) => (
+                                <div key={idx} className="risk-item">
+                                    <FileCheck className="icon-sm text-primary" />
+                                    <span className="risk-text">{rec}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {analysis.compliance_issues && (
+                    <div className="risk-section">
+                        <h4 className="risk-section-title">Compliance Issues</h4>
+                        <p className="risk-text">{analysis.compliance_issues}</p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -50,7 +107,8 @@ const DocAnalysis = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [file, setFile] = useState(null);
     const [analyzing, setAnalyzing] = useState(false);
-    const [result, setResult] = useState(false);
+    const [result, setResult] = useState(null);
+    const [error, setError] = useState(null);
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -66,8 +124,12 @@ const DocAnalysis = () => {
         setIsDragging(false);
         const droppedFile = e.dataTransfer.files[0];
         if (droppedFile) {
-            setFile(droppedFile);
-            simulateAnalysis();
+            if (droppedFile.type === 'application/pdf') {
+                setFile(droppedFile);
+                analyzeDocument(droppedFile);
+            } else {
+                setError('Please upload a PDF file');
+            }
         }
     };
 
@@ -77,18 +139,43 @@ const DocAnalysis = () => {
     }
     const handleFileChange = (e) => {
         if (e.target.files?.[0]) {
-            setFile(e.target.files[0]);
-            simulateAnalysis();
+            const selectedFile = e.target.files[0];
+            if (selectedFile.type === 'application/pdf') {
+                setFile(selectedFile);
+                analyzeDocument(selectedFile);
+            } else {
+                setError('Please upload a PDF file');
+            }
         }
     }
 
-    const simulateAnalysis = () => {
+    const analyzeDocument = async (fileToAnalyze) => {
         setAnalyzing(true);
-        setResult(false);
-        setTimeout(() => {
+        setResult(null);
+        setError(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', fileToAnalyze);
+
+            const response = await fetch('http://localhost:5000/api/analyze-document-ip', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setResult(data.data);
+            } else {
+                setError(data.message || 'Failed to analyze document');
+            }
+        } catch (err) {
+            setError('Failed to connect to the server. Please ensure the backend is running.');
+            console.error('Analysis error:', err);
+        } finally {
             setAnalyzing(false);
-            setResult(true);
-        }, 2000);
+        }
     };
 
     return (
@@ -111,6 +198,7 @@ const DocAnalysis = () => {
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileChange}
+                    accept=".pdf"
                     className="hidden"
                 />
                 <div className="upload-content">
@@ -124,16 +212,23 @@ const DocAnalysis = () => {
 
                     <div className="upload-text">
                         <h3 className="upload-title">
-                            {file ? file.name : "Drop your file here, or click to browse"}
+                            {analyzing ? 'Analyzing document...' : file ? file.name : "Drop your PDF here, or click to browse"}
                         </h3>
                         <p className="upload-hint">
-                            Supports: PDF, DOCX, TXT, Source Code
+                            Supports: PDF files (max 10MB)
                         </p>
                     </div>
                 </div>
             </div>
 
-            {result && <RiskReport />}
+            {error && (
+                <div className="error-message animate-slide-up">
+                    <AlertTriangle className="icon-sm icon-danger" />
+                    <span>{error}</span>
+                </div>
+            )}
+
+            {result && <RiskReport analysisData={result} />}
         </div>
     );
 };

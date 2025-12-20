@@ -23,20 +23,20 @@ const Navbar = ({ activeTab, onTabChange }) => {
                         <Bot className="icon-sm" />
                         Legal Assistant
                     </button>
-                    {/* <button
+                    <button
                         onClick={() => onTabChange('analysis')}
                         className={`nav-link ${activeTab === 'analysis' ? 'active' : ''}`}
                     >
                         <FileText className="icon-sm" />
                         Doc Analysis
-                    </button> */}
+                    </button>
                 </div>
 
                 <div className="nav-actions">
                     <ThemeToggle />
-                    <button className="btn-signin">
+                    {/* <button className="btn-signin">
                         Sign In
-                    </button>
+                    </button> */}
                 </div>
             </div>
         </nav>
