@@ -77,7 +77,7 @@ const ChatInterface = () => {
         setMessages(prev => [...prev, thinkingMsg]);
 
         try {
-            const response = await fetch('http://localhost:5000/api/ask', {
+            const response = await fetch('https://backend-for-spm-production.up.railway.app/api/ask', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

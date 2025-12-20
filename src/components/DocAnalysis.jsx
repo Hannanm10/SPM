@@ -158,7 +158,7 @@ const DocAnalysis = () => {
             const formData = new FormData();
             formData.append('file', fileToAnalyze);
 
-            const response = await fetch('http://localhost:5000/api/analyze-document-ip', {
+            const response = await fetch('https://backend-for-spm-production.up.railway.app/api/analyze-document-ip', {
                 method: 'POST',
                 body: formData,
             });
